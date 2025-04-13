@@ -1,0 +1,232 @@
+* {
+    margin: 0;
+    padding: 0;
+
+}
+
+html {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+header {
+    width: 100%;
+    height: 70px;
+    background-color: #000330;
+    padding: 10px 0;
+    box-shadow: 0 4px 6px rgba(35, 34, 34, 0.375);
+    /* position: fixed; */
+}
+
+.star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background-color: white;
+    animation: move 5s linear infinite;
+    opacity: 0, 5;
+    z-index: 1;
+
+}
+
+@keyframes move {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 1300px;
+    margin: 0 auto;
+    /* padding: 0 20px; */
+    margin-top: 7.5px;
+}
+
+.nav-list {
+    list-style: none;
+    display: flex;
+    gap: 40px;
+    padding: 0;
+    margin: 0;
+
+}
+
+.logo {
+    background-color: #000330;
+    z-index: 2;
+}
+
+.nav-list h3 {
+    color: #ffffff;
+    font-family: "Sigmar", sans-serif;
+    font-weight: 100;
+    font-size: 22px;
+}
+
+.nav-list p {
+    color: red;
+    font-family: "Caveat", cursive;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    letter-spacing: 4px;
+    font-size: 19px;
+    margin-left: 5px;
+}
+
+.nav-list li {
+    /* display: inline; */
+    width: 80px;
+    height: 25px;
+    background-color: #000330;
+    z-index: 2;
+    margin-top: 10px;
+}
+
+a {
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    text-decoration: none;
+    color: #ffffff;
+    font-weight: bold;
+    padding: 10px 15px;
+    transition: 0.3s;
+    /* transition: color 0.3s, background-color 0.3s; */
+}
+
+a:hover {
+    /* background-color: #000;
+    border-radius: 5px; */
+    opacity: 0.7;
+}
+
+.tudo{
+    width: 100%;
+    height: auto;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.usuario{
+    width: 30%;
+    height: 490px;
+    border-radius: 10px;
+    border: 2px solid #000330;
+    display: block;
+    margin: 20px auto;
+}
+
+.foto{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+}
+.foto #fotoperfil{
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.info{
+    margin-top: 50px;
+}
+
+.info p{
+    border: 1px solid #000330;
+    border-radius: 5px;
+    padding: 10px;
+    width: 300px;
+    margin: 10px auto 20px;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 100;
+}
+
+.divisao{
+    width: 3px;
+    height: 600px;
+    background-color: #95B2D5;
+}
+
+.formulario {
+    width: 40%;
+    margin: 30px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    /* box-shadow: 0 0 10px rgba(0,0,0,0.1); */
+}
+
+.formulario h2{
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.formulario label {
+    display: block;
+    margin-top: 15px;
+    text-align: left;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+.formulario input,
+.formulario select,
+.formulario textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: 2px solid #000330;
+}
+
+.formulario button {
+    margin-top: 20px;
+    background: #002a77;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.formulario button:hover {
+    background: #1b386e;
+}
+
+.mensagem {
+    font-family: 'Courier New', Courier, monospace;
+    /* text-align: center; */
+    color: green;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+.voltar button{
+    font-size: 15px;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    color: #ffffff;
+    background-color: #002a77;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 0  50px;
+    border: none;
+    transition: 0.3s ease-in-out;
+    cursor: pointer;
+    box-shadow: 0 5px 6px #61616159;
+    margin-bottom: 10px;
+}
