@@ -89,6 +89,23 @@ if (isset($_POST['entrar'])) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&family=Sigmar&display=swap" rel="stylesheet">
 </head>
+<style>
+    @media (max-width: 480px){
+        nav{
+            width: 30%;
+        }
+        .title h2{
+            font-size: 30px;
+        }
+        #insider{
+            font-size: 15px;
+        }
+        .container{
+            margin-top: 5%;
+            width: 90%;
+        }
+    }
+</style>
 
 <body>
     <header>

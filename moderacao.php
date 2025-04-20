@@ -44,6 +44,7 @@ $resultado = $conn->query($sql);
 
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <title>Moderação de Postagens</title>
@@ -55,17 +56,174 @@ $resultado = $conn->query($sql);
     <link
         href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&family=Sigmar&display=swap"
         rel="stylesheet">
+    <style>
+        @media (max-width: 480px) {
+            header {
+                height: 50px;
+            }
+
+            nav {
+                width: 90%;
+                margin-top: 0;
+            }
+
+            .nav-list {
+                gap: 20px;
+            }
+
+            .nav-list h3 {
+                font-size: 17px;
+            }
+
+            .nav-list p {
+                font-size: 15px;
+                margin-left: 4px;
+            }
+
+            .nav-list li {
+                width: 60%;
+            }
+
+            a {
+                font-size: 12px;
+            }
+
+            .foto {
+                width: 32%;
+            }
+
+            .foto #fotoperfil {
+                width: 100px;
+                height: 100px;
+            }
+
+            .hr p {
+                font-size: 25px;
+            }
+
+            .card-container {
+                display: flex;
+                flex-wrap: wrap;
+                /* Permite quebra de linha */
+                gap: 20px;
+                justify-content: center;
+                /* Centraliza em telas menores */
+                margin: 30px auto;
+                max-width: 100%;
+                /* Ocupa toda a largura disponível */
+                padding: 0 20px;
+            }
+
+            .card {
+                background: white;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+                flex: 1 1 280px;
+                /* Cresce, encolhe, tamanho mínimo */
+                max-width: 320px;
+            }
+
+            .card h3 {
+                font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+            }
+
+            .card p {
+                font-family: Arial, Helvetica, sans-serif;
+            }
+
+            .card #subtitulo {
+                font-size: 15px;
+            }
+
+            .card img {
+                width: 100%;
+                max-height: 200px;
+                object-fit: cover;
+                border-radius: 6px;
+            }
+
+            .botoes {
+                margin-top: 15px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .botoes form {
+                display: inline;
+            }
+
+            .botoes button {
+                padding: 8px 16px;
+                border: none;
+                border-radius: 6px;
+                color: white;
+                font-weight: bold;
+                cursor: pointer;
+                transition: 0.3s ease-in-out;
+            }
+
+            .aprovar {
+                background-color: #28a745;
+            }
+
+            .reprovar {
+                background-color: #dc3545;
+            }
+
+            .botoes button:hover {
+                transform: scale(1.02);
+            }
+
+            .voltar button {
+                font-size: 15px;
+                font-family: Verdana, Geneva, Tahoma, sans-serif;
+                color: #ffffff;
+                background-color: #002a77;
+                border-radius: 4px;
+                padding: 10px;
+                /* margin: 20px auto 10px auto;
+    display: block; */
+                border: none;
+                transition: 0.3s ease-in-out;
+                cursor: pointer;
+                box-shadow: 0 5px 6px #61616159;
+            }
+
+            /* Responsividade adicional */
+            @media (max-width: 768px) {
+                .card-container {
+                    gap: 15px;
+                }
+            }
+
+            @media (max-width: 480px) {
+                .botoes {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .botoes button {
+                    width: 100%;
+                    margin: 20px auto 10px auto;
+                }
+            }
+
+        }
+    </style>
 </head>
+
 <body>
     <header>
-    <nav>
+        <nav>
             <div class="imagem">
             </div>
             <ul class="nav-list">
                 <li>
                     <a href="#" onclick="abrir()" class="menu-button">MENU</a>
                 </li>
-                <li><a href="home.html">HOME</a></li>
+                <li><a href="home.php">HOME</a></li>
 
                 <div class="logo">
                     <h3>EDUCA</h3>
@@ -73,57 +231,57 @@ $resultado = $conn->query($sql);
                     <!-- <img src="" alt="livro">  -->
                 </div>
 
-                <li><a href="perfil.html">PERFIL</a></li>
-                <li><a href="jogos.html">JOGOS</a></li>
+                <li><a href="perfil.php">PERFIL</a></li>
+                <li><a href="mostrar_livro.php">LIVROS</a></li>
             </ul>
         </nav>
     </header>
 
     <main>
 
-    <div class="user">
-                <div class="foto">
+        <div class="user">
+            <div class="foto">
                 <?php if ($foto): ?>
-        <img  id="fotoperfil" src="<?php echo $foto; ?>" alt="Foto de Perfil" >
-    <?php endif; ?>
-                </div>
-                <div class="hr">
-                    <p>Postagens Pendentes</p>
-                    <hr>
-                </div>
+                    <img id="fotoperfil" src="<?php echo $foto; ?>" alt="Foto de Perfil">
+                <?php endif; ?>
             </div>
-    <div class="card-container">
-        <?php while ($p = $resultado->fetch_assoc()): ?>
-            <div class="card">
-                <h3><?= htmlspecialchars($p['titulo']) ?></h3>
-                <p><strong>Matéria:</strong> <?= htmlspecialchars($p['nome_materia']) ?></p>
-                <p id="subtitulo"><?= htmlspecialchars($p['subtitulo']) ?></p>
-                <img src="uploads/<?= $p['imagem'] ?>" alt="Imagem da postagem">
-
-                <div class="botoes">
-                    <form method="post">
-                        <input type="hidden" name="id" value="<?= $p['id'] ?>">
-                        <input type="hidden" name="acao" value="aprovado">
-                        <button class="aprovar" type="submit">Aprovar</button>
-                    </form>
-
-                    <form method="post">
-                        <input type="hidden" name="id" value="<?= $p['id'] ?>">
-                        <input type="hidden" name="acao" value="reprovado">
-                        <button class="reprovar" type="submit">Reprovar</button>
-                    </form>
-                </div>
+            <div class="hr">
+                <p>Postagens Pendentes</p>
+                <hr>
             </div>
-        <?php endwhile; ?>
+        </div>
+        <div class="card-container">
+            <?php while ($p = $resultado->fetch_assoc()): ?>
+                <div class="card">
+                    <h3><?= htmlspecialchars($p['titulo']) ?></h3>
+                    <p><strong>Matéria:</strong> <?= htmlspecialchars($p['nome_materia']) ?></p>
+                    <p id="subtitulo"><?= htmlspecialchars($p['subtitulo']) ?></p>
+                    <img src="uploads/<?= $p['imagem'] ?>" alt="Imagem da postagem">
 
-        <?php if ($resultado->num_rows === 0): ?>
-            <p style="text-align:center; font-family:Arial, Helvetica, sans-serif">Nenhuma postagem pendente no momento.</p>
-        <?php endif; ?>
-    </div>
+                    <div class="botoes">
+                        <form method="post">
+                            <input type="hidden" name="id" value="<?= $p['id'] ?>">
+                            <input type="hidden" name="acao" value="aprovado">
+                            <button class="aprovar" type="submit">Aprovar</button>
+                        </form>
 
-    <div class="voltar">
-        <button type="submit" onclick="voltar()">Voltar</button>
-    </div>
+                        <form method="post">
+                            <input type="hidden" name="id" value="<?= $p['id'] ?>">
+                            <input type="hidden" name="acao" value="reprovado">
+                            <button class="reprovar" type="submit">Reprovar</button>
+                        </form>
+                    </div>
+                </div>
+            <?php endwhile; ?>
+
+            <?php if ($resultado->num_rows === 0): ?>
+                <p style="text-align:center; font-family:Arial, Helvetica, sans-serif">Nenhuma postagem pendente no momento.</p>
+            <?php endif; ?>
+        </div>
+
+        <div class="voltar">
+            <button type="submit" onclick="voltar()">Voltar</button>
+        </div>
     </main>
 
     <script>
@@ -141,9 +299,10 @@ $resultado = $conn->query($sql);
         document.header.style.backgroundColor = "#000330";
 
 
-        function voltar(){
+        function voltar() {
             window.location.href = "perfil.php"
         }
     </script>
 </body>
+
 </html>

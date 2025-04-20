@@ -1,29 +1,24 @@
-body {
+/* body {
     font-family: Arial, sans-serif;
     text-align: center;
     background: #f2f2f2;
     margin: 0;
     padding: 20px;
-}
-
-h1 {
-    margin-bottom: 30px;
-}
-
-.container {
+} */
+/* .container {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 20px;
-}
+} */
 
-.card {
+/* .card {
     background: white;
     border-radius: 10px;
     width: 200px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     transition: 0.3s;
-}
+} */
 
 .card:hover {
     transform: scale(1.05);
@@ -37,7 +32,7 @@ h1 {
     object-fit: cover;
 }
 
-.card h2 {
+/* .card h2 {
     padding: 15px;
     margin: 0;
-}
+} */

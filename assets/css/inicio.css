@@ -187,3 +187,20 @@ header p{
 footer p:hover{
     transform: scale(1.1);
 }
+
+@media screen and (max-width: 768px) {
+    .title{
+      margin-top: 40%;
+    }
+    .subtitle{
+        display: block;
+        margin: 5px auto;
+        width: 290px;
+    }
+    .txt1 p{
+        font-size: 17px;
+    }
+    .borda{
+       margin-left: 15px; 
+    }
+}

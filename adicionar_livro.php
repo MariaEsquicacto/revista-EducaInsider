@@ -1,5 +1,6 @@
 <?php
-include 'db/conexao.php';
+// Conexão com o banco de dados
+include 'db/conexao.php'; // Supondo que você já tenha essa variável $conn
 
 session_start();
 if (!isset($_SESSION['nome'])) {
@@ -18,51 +19,91 @@ $usuario = $result->fetch_assoc();
 $foto = $usuario['foto'];
 $nivel = $usuario['nivel'];
 
-
-
-
-$mensagem = "";
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $materia_id = $_POST['materia'] ?? '';
-    $titulo = $_POST['titulo'] ?? '';
-    $subtitulo = $_POST['subtitulo'] ?? '';
-    $conteudo = $_POST['conteudo'] ?? '';
-    $imagem = $_FILES['imagem'] ?? null;
+    // Inicializando a variável de mensagem
+    $mensagem = '';
 
-    if ($materia_id && $titulo && $subtitulo && $conteudo && $imagem) {
-        $nomeImagem = uniqid() . "-" . basename($imagem['name']);
-        $caminhoImagem = "uploads/" . $nomeImagem;
+    // Validar campos obrigatórios
+    $campos = ['nome', 'autor', 'sinopse', 'imagem', 'link_compra', 'disponibilidade'];
+    foreach ($campos as $campo) {
+        if (empty($_POST[$campo]) && $campo !== 'imagem') {
+            $mensagem = "<p class='erro'>O campo '$campo' é obrigatório.</p>";
+            echo $mensagem;
+            return;
+        }
+    }
 
-        if (move_uploaded_file($imagem['tmp_name'], $caminhoImagem)) {
-            $sql = $conn->prepare("INSERT INTO postagens (materia_id, titulo, subtitulo, conteudo, imagem, status) 
-                                   VALUES (?, ?, ?, ?, ?, 'pendente')");
-            $sql->bind_param("issss", $materia_id, $titulo, $subtitulo, $conteudo, $nomeImagem);
+    // Verificar se o arquivo de imagem foi enviado
+    if (isset($_FILES['imagem']) && $_FILES['imagem']['error'] === UPLOAD_ERR_OK) {
+        $imagemTmp = $_FILES['imagem']['tmp_name'];
+        $imagemNome = $_FILES['imagem']['name'];
+        $imagemTipo = $_FILES['imagem']['type'];
+        $imagemTamanho = $_FILES['imagem']['size'];
 
-            if ($sql->execute()) {
-                $mensagem = "Postagem enviada para análise!";
-            } else {
-                $mensagem = "Erro ao salvar no banco de dados.";
-            }
-        } else {
-            $mensagem = "Erro ao enviar imagem.";
+        // Validar tipo e tamanho da imagem
+        $tiposPermitidos = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!in_array($imagemTipo, $tiposPermitidos)) {
+            $mensagem = "<p class='erro'>Tipo de imagem não permitido.</p>";
+            echo $mensagem;
+            return;
+        }
+
+        if ($imagemTamanho > 5000000) { // Limitar o tamanho para 5MB
+            $mensagem = "<p class='erro'>A imagem é muito grande. O tamanho máximo permitido é 5MB.</p>";
+            echo $mensagem;
+            return;
+        }
+
+        // Gerar um nome único para a imagem
+        $imagemDestino = 'uploads/' . uniqid() . '_' . basename($imagemNome);
+
+        // Mover a imagem para o diretório 'uploads'
+        if (!move_uploaded_file($imagemTmp, $imagemDestino)) {
+            $mensagem = "<p class='erro'>Erro ao fazer o upload da imagem.</p>";
+            echo $mensagem;
+            return;
         }
     } else {
-        $mensagem = "Preencha todos os campos!";
+        $mensagem = "<p class='erro'>Nenhuma imagem foi enviada.</p>";
+        echo $mensagem;
+        return;
+    }
+
+    // Sanitizar outros campos
+    $nome = $conn->real_escape_string($_POST['nome']);
+    $autor = $conn->real_escape_string($_POST['autor']);
+    $sinopse = $conn->real_escape_string($_POST['sinopse']);
+    $link_compra = $conn->real_escape_string($_POST['link_compra']);
+    $disponibilidade = $conn->real_escape_string($_POST['disponibilidade']);
+
+    $opcoesDisponibilidade = ['escrito', 'possui', 'nao_possui'];
+    if (!in_array($disponibilidade, $opcoesDisponibilidade)) {
+        $mensagem = "<p class='erro'>Disponibilidade inválida.</p>";
+        echo $mensagem;
+        return;
+    } else {
+        // Inserir no banco de dados
+        $sql = "INSERT INTO livros (nome, autor, sinopse, imagem, link_compra, disponibilidade)
+                VALUES ('$nome', '$autor', '$sinopse', '$imagemDestino', '$link_compra', '$disponibilidade')";
+
+        if ($conn->query($sql)) {
+            $mensagem = "<p class='sucesso'>Livro adicionado com sucesso!</p>";
+            echo $mensagem;
+        } else {
+            $mensagem = "<p class='erro'>Erro ao adicionar livro.</p>";
+            echo $mensagem;
+        }
     }
 }
-
-// buscar matérias
-$materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
 ?>
 
+
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
-    <title>Criar Postagem</title>
-    <link rel="stylesheet" href="./assets/css/criar_postagem.css">
+    <title>Adicionar Livro</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -74,7 +115,6 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
         * {
             margin: 0;
             padding: 0;
-
         }
 
         html {
@@ -184,14 +224,6 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
             opacity: 0.7;
         }
 
-        .tudo {
-            width: 90%;
-            height: auto;
-            display: flex;
-            justify-content: space-evenly;
-            align-items: center;
-        }
-
         main {
             width: 100%;
             height: 100%;
@@ -200,6 +232,9 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
         .tudo {
             width: 90%;
             margin-left: 45px;
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
 
         }
 
@@ -210,6 +245,7 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
             margin-left: 10%;
             margin-bottom: 30%;
         }
+
         .foto #fotoperfil {
             width: 200px;
             height: 200px;
@@ -259,7 +295,24 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
             border-radius: 10px;
         }
 
-        .formulario button {
+        h1 {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #002a77;
+            font-size: 25px;
+            margin-bottom: 25px;
+        }
+
+        form input,
+        form textarea,
+        form select {
+            width: 95%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 6px;
+            border: 2px solid #000330;
+        }
+
+        form button {
             width: 100%;
             background: #002a77;
             color: white;
@@ -274,32 +327,9 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
         .formulario button:hover {
             background: #1b386e;
         }
-
-        h2 {
-            font-size: 25px;
-            color: #002a77;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        .formulario select {
-            max-width: 200px;
-        }
-
-        .formulario input,
-        .formulario select,
-        .formulario textarea {
-            width: 95%;
-            padding: 10px;
-            margin-top: 5px;
-            border-radius: 6px;
-            border: 2px solid #000330;
-
-        }
-
         .formulario label {
             display: block;
             margin-top: 15px;
-            text-align: left;
             font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
         }
 
@@ -311,6 +341,11 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
             margin-top: 20px;
         }
 
+        .erro {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
         .voltar button {
             font-size: 30px;
             border: none;
@@ -527,7 +562,6 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
 
 
         }
-
     </style>
 </head>
 
@@ -538,7 +572,7 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
             </div>
             <ul class="nav-list">
                 <li>
-                    <a href="#" onclick="abrir()" class="menu-button">MENU</a>
+                    <a href="#" class="menu-button" onclick="carregarMaterias()">MATÉRIAS</a>
                 </li>
                 <li><a href="home.php">HOME</a></li>
 
@@ -553,13 +587,13 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
             </ul>
         </nav>
     </header>
-    <main>
 
+    <main>
     <div class="voltar">
             <button type="submit" onclick="voltar()"><i class="bi bi-arrow-left-circle-fill"></i></button>
         </div>
         <section class="tudo">
-            <section class="usuario">
+            <div class="usuario">
                 <div class="foto">
                     <?php if ($foto): ?>
                         <img id="fotoperfil" src="<?php echo $foto; ?>" alt="Foto de Perfil">
@@ -570,44 +604,37 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
                     <p id="nivel"> Nível: <?= htmlspecialchars($nivel) ?></p>
 
                 </div>
-
-            </section>
-
-            <!-- <div class="divisao"></div> -->
-
-
+            </div>
             <div class="formulario">
-                <h2>Criar Nova Postagem</h2>
+                <h1>Adicionar Livro</h1>
                 <?php if ($mensagem): ?>
                     <p class="mensagem"><?= $mensagem ?></p>
                 <?php endif; ?>
-                <form method="post" enctype="multipart/form-data">
-                    <label for="materia">Matéria:</label>
-                    <select name="materia" required>
-                        <option value="">Selecione</option>
-                        <?php while ($m = $materias->fetch_assoc()): ?>
-                            <option value="<?= $m['id'] ?>"><?= $m['nome'] ?></option>
-                        <?php endwhile; ?>
-                    </select>
+                <form method="POST" action="" enctype="multipart/form-data">
+    <label for="nome">Nome do livro:</label>
+    <input type="text" id="nome" name="nome" placeholder="Ex: Dom Casmurro" required>
 
-                    <label for="titulo">Título:</label>
-                    <input type="text" name="titulo" required>
+    <label for="autor">Autor:</label>
+    <input type="text" id="autor" name="autor" placeholder="Ex: Machado de Assis" required>
 
-                    <label for="subtitulo">Subtítulo:</label>
-                    <input type="text" name="subtitulo" required>
+    <label for="sinopse">Sinopse:</label>
+    <textarea id="sinopse" name="sinopse" placeholder="Digite a sinopse aqui..." required></textarea>
 
-                    <label for="conteudo">Conteúdo:</label>
-                    <textarea name="conteudo" rows="8" required></textarea>
+    <label for="imagem">Imagem:</label>
+    <input type="file" id="imagem" name="imagem" accept="image/*" required>
 
-                    <label for="imagem">Imagem:</label>
-                    <input type="file" name="imagem" accept="image/*" required>
+    <label for="link_compra">Link de compra:</label>
+    <input type="text" id="link_compra" name="link_compra" placeholder="Ex: https://..." required>
 
-                    <button type="submit">Criar Postagem</button>
+
+    <button type="submit">Salvar Livro</button>
+
                 </form>
+
             </div>
         </section>
-        
     </main>
+
 
     <script>
         for (let i = 0; i < 1000; i++) {
@@ -622,7 +649,6 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
         }
 
         document.header.style.backgroundColor = "#000330";
-
         function voltar() {
             window.location.href = "perfil.php"
         }

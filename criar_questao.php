@@ -18,51 +18,62 @@ $usuario = $result->fetch_assoc();
 $foto = $usuario['foto'];
 $nivel = $usuario['nivel'];
 
-
-
-
 $mensagem = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $tema = $_POST['tema'];
     $materia_id = $_POST['materia'] ?? '';
     $titulo = $_POST['titulo'] ?? '';
-    $subtitulo = $_POST['subtitulo'] ?? '';
-    $conteudo = $_POST['conteudo'] ?? '';
+    $enunciado = $_POST['enunciado'] ?? '';
+    $explicacao = $_POST['explicacao'] ?? '';
     $imagem = $_FILES['imagem'] ?? null;
+    $alternativas = $_POST['alternativas'] ?? [];
+    $correta = $_POST['correta'] ?? '';
 
-    if ($materia_id && $titulo && $subtitulo && $conteudo && $imagem) {
-        $nomeImagem = uniqid() . "-" . basename($imagem['name']);
-        $caminhoImagem = "uploads/" . $nomeImagem;
-
-        if (move_uploaded_file($imagem['tmp_name'], $caminhoImagem)) {
-            $sql = $conn->prepare("INSERT INTO postagens (materia_id, titulo, subtitulo, conteudo, imagem, status) 
-                                   VALUES (?, ?, ?, ?, ?, 'pendente')");
-            $sql->bind_param("issss", $materia_id, $titulo, $subtitulo, $conteudo, $nomeImagem);
-
-            if ($sql->execute()) {
-                $mensagem = "Postagem enviada para análise!";
-            } else {
-                $mensagem = "Erro ao salvar no banco de dados.";
-            }
-        } else {
-            $mensagem = "Erro ao enviar imagem.";
+    if ($materia_id && $titulo && $enunciado && count($alternativas) >= 2) {
+        $nomeImagem = null;
+        if ($imagem && $imagem['tmp_name']) {
+            $nomeImagem = uniqid() . "-" . basename($imagem['name']);
+            move_uploaded_file($imagem['tmp_name'], "uploads/" . $nomeImagem);
         }
+
+        // Inserir a questão
+        $stmt = $conn->prepare("INSERT INTO questoes (tema, materia_id, titulo, enunciado, imagem, explicacao) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("sissss", $tema, $materia_id, $titulo, $enunciado, $nomeImagem, $explicacao);
+        $stmt->execute();
+        $questao_id = $stmt->insert_id;
+
+        // Inserir as alternativas
+        foreach ($alternativas as $i => $texto) {
+            $texto = trim($texto);
+            if ($texto) {
+                $correta_bool = ($i == $correta) ? 1 : 0;
+                $stmtAlt = $conn->prepare("INSERT INTO alternativas (questao_id, texto, correta) VALUES (?, ?, ?)");
+                $stmtAlt->bind_param("isi", $questao_id, $texto, $correta_bool);
+                $stmtAlt->execute();
+            }
+        }
+
+        $mensagem = "Questão criada com sucesso!";
     } else {
-        $mensagem = "Preencha todos os campos!";
+        $mensagem = "Preencha todos os campos corretamente!";
     }
 }
 
-// buscar matérias
+
 $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
+
+
 ?>
 
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title>Criar Postagem</title>
-    <link rel="stylesheet" href="./assets/css/criar_postagem.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Questão</title>
+    <link rel="stylesheet" href="assets/css/criar_questao.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -71,127 +82,6 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
         href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&family=Sigmar&display=swap"
         rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-
-        }
-
-        html {
-            width: 100%;
-            height: 100%;
-        }
-
-        body {
-            overflow-x: hidden;
-        }
-
-        header {
-            width: 100%;
-            height: 70px;
-            background-color: #000330;
-            padding: 10px 0;
-            box-shadow: 0 4px 6px rgba(35, 34, 34, 0.375);
-            /* position: fixed; */
-        }
-
-        .star {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background-color: white;
-            animation: move 5s linear infinite;
-            opacity: 0, 5;
-            z-index: 1;
-
-        }
-
-        @keyframes move {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-
-            100% {
-                transform: scale(0);
-                opacity: 0;
-            }
-        }
-
-        nav {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            max-width: 1300px;
-            margin: 0 auto;
-            /* padding: 0 20px; */
-            margin-top: 7.5px;
-        }
-
-        .nav-list {
-            list-style: none;
-            display: flex;
-            gap: 40px;
-            padding: 0;
-            margin: 0;
-
-        }
-
-        .logo {
-            background-color: #000330;
-            z-index: 2;
-        }
-
-        .nav-list h3 {
-            color: #ffffff;
-            font-family: "Sigmar", sans-serif;
-            font-weight: 100;
-            font-size: 22px;
-        }
-
-        .nav-list p {
-            color: red;
-            font-family: "Caveat", cursive;
-            font-optical-sizing: auto;
-            font-weight: 700;
-            letter-spacing: 4px;
-            font-size: 19px;
-            margin-left: 5px;
-        }
-
-        .nav-list li {
-            /* display: inline; */
-            width: 80px;
-            height: 25px;
-            background-color: #000330;
-            z-index: 2;
-            margin-top: 10px;
-        }
-
-        a {
-            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-            text-decoration: none;
-            color: #ffffff;
-            font-weight: bold;
-            padding: 10px 15px;
-            transition: 0.3s;
-            /* transition: color 0.3s, background-color 0.3s; */
-        }
-
-        a:hover {
-            /* background-color: #000;
-    border-radius: 5px; */
-            opacity: 0.7;
-        }
-
-        .tudo {
-            width: 90%;
-            height: auto;
-            display: flex;
-            justify-content: space-evenly;
-            align-items: center;
-        }
-
         main {
             width: 100%;
             height: 100%;
@@ -199,17 +89,18 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
 
         .tudo {
             width: 90%;
-            margin-left: 45px;
-
+            height: 100%;
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
         }
 
         .usuario {
             width: 30%;
-            height: auto;
-            border: none;
-            margin-left: 10%;
-            margin-bottom: 30%;
+            margin-bottom: 50%;
+            margin-left: 15%;
         }
+
         .foto #fotoperfil {
             width: 200px;
             height: 200px;
@@ -221,15 +112,6 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
             width: 90%;
             display: block;
             margin: 0 30px;
-            /* display: flex;
-            justify-content: center;
-            align-items: center; */
-        }
-
-        .info hr {
-            width: 70%;
-            height: 2px;
-            background-color: #002a77;
         }
 
         .info p {
@@ -251,7 +133,7 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
         }
 
         .formulario {
-            width: 60%;
+            width: 50%;
             border: 1px solid #002a77;
             margin: 30px auto;
             background: white;
@@ -275,14 +157,29 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
             background: #1b386e;
         }
 
-        h2 {
+        h2,
+        h3 {
             font-size: 25px;
             color: #002a77;
             font-family: Arial, Helvetica, sans-serif;
         }
 
-        .formulario select {
-            max-width: 200px;
+        h3 {
+            font-size: 19px;
+        }
+
+        .formulario label {
+            /* display: block; */
+            margin-top: 15px;
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+        }
+
+        .mensagem {
+            font-family: 'Courier New', Courier, monospace;
+            /* text-align: center; */
+            color: green;
+            font-weight: bold;
+            margin-top: 20px;
         }
 
         .formulario input,
@@ -293,22 +190,11 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
             margin-top: 5px;
             border-radius: 6px;
             border: 2px solid #000330;
-
         }
 
-        .formulario label {
-            display: block;
-            margin-top: 15px;
-            text-align: left;
-            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-        }
-
-        .mensagem {
-            font-family: 'Courier New', Courier, monospace;
-            /* text-align: center; */
-            color: green;
-            font-weight: bold;
-            margin-top: 20px;
+        #alternativas {
+            width: 250px;
+            padding: 5px;
         }
 
         .voltar button {
@@ -321,10 +207,12 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
             background-color: #fff;
             height: 20px;
         }
-        .voltar button:hover{
+
+        .voltar button:hover {
             transform: scale(1.02);
         }
-        @media (max-width: 480px){
+
+        @media (max-width: 480px) {
             header {
                 height: 50px;
             }
@@ -354,6 +242,7 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
             a {
                 font-size: 12px;
             }
+
             main {
                 width: 100%;
                 height: 100%;
@@ -525,9 +414,7 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
                 }
             }
 
-
         }
-
     </style>
 </head>
 
@@ -554,8 +441,7 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
         </nav>
     </header>
     <main>
-
-    <div class="voltar">
+        <div class="voltar">
             <button type="submit" onclick="voltar()"><i class="bi bi-arrow-left-circle-fill"></i></button>
         </div>
         <section class="tudo">
@@ -567,47 +453,56 @@ $materias = $conn->query("SELECT id, nome FROM materias ORDER BY nome ASC");
                 </div>
                 <div class="info">
                     <p> <?php echo $_SESSION['nome']; ?></p>
-                    <p id="nivel"> Nível: <?= htmlspecialchars($nivel) ?></p>
-
+                    <p id="nivel"> Nível:<?= htmlspecialchars($nivel) ?></p>
                 </div>
 
             </section>
 
-            <!-- <div class="divisao"></div> -->
-
-
             <div class="formulario">
-                <h2>Criar Nova Postagem</h2>
+                <h2>Criar Questão</h2>
                 <?php if ($mensagem): ?>
                     <p class="mensagem"><?= $mensagem ?></p>
                 <?php endif; ?>
-                <form method="post" enctype="multipart/form-data">
-                    <label for="materia">Matéria:</label>
+                <form method="POST" enctype="multipart/form-data">
+                    <label>Matéria:</label>
                     <select name="materia" required>
                         <option value="">Selecione</option>
                         <?php while ($m = $materias->fetch_assoc()): ?>
                             <option value="<?= $m['id'] ?>"><?= $m['nome'] ?></option>
                         <?php endwhile; ?>
-                    </select>
+                    </select><br><br>
 
-                    <label for="titulo">Título:</label>
-                    <input type="text" name="titulo" required>
+                    <label for="tema">Tema:</label>
+                    <input type="text" id="tema" name="tema" required>
 
-                    <label for="subtitulo">Subtítulo:</label>
-                    <input type="text" name="subtitulo" required>
+                    <label>Título:</label>
+                    <input type="text" name="titulo" required><br><br>
 
-                    <label for="conteudo">Conteúdo:</label>
-                    <textarea name="conteudo" rows="8" required></textarea>
+                    <label>Enunciado:</label>
+                    <textarea name="enunciado" required></textarea><br><br>
 
-                    <label for="imagem">Imagem:</label>
-                    <input type="file" name="imagem" accept="image/*" required>
+                    <label>Imagem (opcional):</label>
+                    <input type="file" name="imagem" accept="image/*"><br><br>
 
-                    <button type="submit">Criar Postagem</button>
+                    <label>Explicação (mostrada se errar):</label>
+                    <textarea name="explicacao" required></textarea><br><br>
+
+                    <h3>Alternativas</h3>
+                    <?php for ($i = 0; $i < 4; $i++): ?>
+                        <label>
+                            <input id="alternativas" type="radio" name="correta" value="<?= $i ?>" required>
+                            <input id="alternativas" type="text" name="alternativas[]" required placeholder="Texto da alternativa">
+                        </label><br>
+                    <?php endfor; ?>
+
+                    <br><button type="submit">Salvar Questão</button>
                 </form>
             </div>
         </section>
-        
+
     </main>
+
+
 
     <script>
         for (let i = 0; i < 1000; i++) {
